@@ -3,177 +3,421 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Mini Blokus (2 Players)</title>
+  <title>Block Dominion (2 Players)</title>
+
   <style>
     :root{
-      --bg:#f6f8fc;
-      --card:#fff;
-      --line:#e0e3eb;
-      --text:#1f1f1f;
-      --muted:#5f6368;
-      --blue:#1a73e8;
-      --orange:#f29900;
-      --shadow: 0 1px 2px rgba(0,0,0,.06), 0 10px 30px rgba(0,0,0,.10);
-      --r:16px;
-      --cell:26px;
+      --bg1:#7c3aed;          /* purple */
+      --bg2:#06b6d4;          /* cyan */
+      --card:#ffffff;
+      --line:rgba(0,0,0,.08);
+      --text:#101828;
+      --muted:#475467;
+
+      --blue:#2F80FF;
+      --orange:#FF7A00;
+
+      --ok:#16a34a;
+      --bad:#ef4444;
+
+      --shadow: 0 10px 25px rgba(0,0,0,.15);
+      --radius: 20px;
+
+      --cell: 28px;
     }
-    body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--text); }
-    .wrap{ max-width:1100px; margin:20px auto; padding:0 14px; display:grid; gap:14px; grid-template-columns: 1fr 320px; }
-    .boardCard, .sideCard{ background:var(--card); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--shadow); overflow:hidden; }
-    .header{ padding:14px 16px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; gap:10px; }
-    .title{ font-weight:800; }
-    .sub{ color:var(--muted); font-size:13px; }
-    .main{ padding:14px 16px; }
-    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      color:var(--text);
+      font-family: "Comic Sans MS", "Trebuchet MS", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 700px at 20% 10%, rgba(255,255,255,.35), transparent 60%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+      min-height:100vh;
+    }
+
+    .wrap{
+      max-width:1180px;
+      margin: 18px auto;
+      padding: 0 14px 24px;
+      display:grid;
+      gap:14px;
+      grid-template-columns: 1fr 360px;
+    }
+
+    .card{
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(6px);
+      border: 2px solid rgba(255,255,255,.55);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .header{
+      padding: 14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom: 2px solid rgba(0,0,0,.06);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,.55));
+    }
+
+    .title{
+      font-weight: 900;
+      font-size: 22px;
+      letter-spacing: .2px;
+    }
+    .sub{
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 2px;
+    }
+
+    .pill{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 2px solid rgba(0,0,0,.08);
+      background: rgba(255,255,255,.85);
+      font-weight: 800;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .dot{
+      width:12px; height:12px;
+      border-radius:50%;
+      box-shadow: 0 0 0 4px rgba(0,0,0,.06);
+    }
+
+    .main{ padding: 14px 16px; }
+
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      margin-bottom: 12px;
+    }
+
     button{
-      border:1px solid var(--line); background:#fff; border-radius:999px;
-      padding:8px 12px; cursor:pointer; font-weight:650;
+      border:0;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 900;
+      cursor:pointer;
+      box-shadow: 0 10px 18px rgba(0,0,0,.12);
+      transform: translateY(0);
+      transition: transform .06s ease, filter .12s ease;
+      background: linear-gradient(180deg, #ffffff, #f3f4f6);
     }
-    button:hover{ filter:brightness(.98); }
-    .pill{ border-radius:999px; padding:6px 10px; font-size:13px; border:1px solid var(--line); background:#f1f3f4; }
-    .turnDot{ width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:8px; vertical-align:middle; }
+    button:hover{ filter: brightness(1.03); }
+    button:active{ transform: translateY(1px); }
+
+    .btnBlue{
+      background: linear-gradient(180deg, rgba(47,128,255,1), rgba(47,128,255,.75));
+      color:white;
+    }
+    .btnOrange{
+      background: linear-gradient(180deg, rgba(255,122,0,1), rgba(255,122,0,.75));
+      color:white;
+    }
+    .btnNeutral{
+      background: linear-gradient(180deg, #ffffff, #eef2ff);
+    }
+
+    .status{
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .gridWrap{
+      display:flex;
+      justify-content:center;
+    }
+
     .grid{
       display:grid;
       grid-template-columns: repeat(14, var(--cell));
       grid-template-rows: repeat(14, var(--cell));
-      gap:2px;
-      justify-content:center;
-      padding:14px;
-      background: #f8fafc;
+      gap: 2px;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.72);
+      border: 2px solid rgba(0,0,0,.06);
+      box-shadow: inset 0 0 0 3px rgba(255,255,255,.7);
     }
+
     .cell{
-      width:var(--cell); height:var(--cell);
-      border:1px solid #dfe3ee;
-      background:#fff;
-      box-sizing:border-box;
+      width: var(--cell);
+      height: var(--cell);
+      border-radius: 7px;
+      border: 2px solid rgba(0,0,0,.08);
+      background: rgba(255,255,255,.95);
       cursor:pointer;
+      transition: outline .08s ease, filter .12s ease;
     }
-    .cell:hover{ outline:2px solid rgba(26,115,232,.15); }
-    .owned-blue{ background:rgba(26,115,232,.9); border-color:rgba(26,115,232,.9); }
-    .owned-orange{ background:rgba(242,153,0,.95); border-color:rgba(242,153,0,.95); }
-    .preview-ok{ outline:2px solid rgba(24,128,56,.55); }
-    .preview-bad{ outline:2px solid rgba(217,48,37,.55); }
+    .cell:hover{ filter: brightness(.98); }
 
-    .pieces{ display:grid; gap:10px; }
-    .pieceBtn{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      padding:10px 12px; border-radius:14px; border:1px solid var(--line); background:#fff; cursor:pointer;
+    .owned-blue{
+      background: var(--blue);
+      border-color: rgba(0,0,0,.08);
+      box-shadow: inset 0 -3px 0 rgba(0,0,0,.18);
     }
-    .pieceBtn:hover{ filter:brightness(.99); }
+    .owned-orange{
+      background: var(--orange);
+      border-color: rgba(0,0,0,.08);
+      box-shadow: inset 0 -3px 0 rgba(0,0,0,.18);
+    }
+
+    .preview-ok{ outline: 4px solid rgba(22,163,74,.55); }
+    .preview-bad{ outline: 4px solid rgba(239,68,68,.55); }
+
+    .side{
+      display:grid;
+      gap:12px;
+    }
+
+    .panel{
+      padding: 14px 16px;
+    }
+
+    label{
+      display:block;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+
+    select{
+      width:100%;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 2px solid rgba(0,0,0,.10);
+      font-weight: 900;
+      font-family: inherit;
+      background: rgba(255,255,255,.9);
+      cursor:pointer;
+      box-shadow: 0 10px 18px rgba(0,0,0,.08);
+    }
+
+    .miniRow{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      margin-top: 12px;
+    }
+
     .mini{
-      display:grid; gap:2px;
-      grid-template-columns: repeat(5, 10px);
-      grid-template-rows: repeat(5, 10px);
-      padding:6px; border-radius:10px; background:#f1f3f4; border:1px solid var(--line);
+      display:grid;
+      grid-template-columns: repeat(5, 12px);
+      grid-template-rows: repeat(5, 12px);
+      gap:2px;
+      padding: 10px;
+      border-radius: 16px;
+      border: 2px solid rgba(0,0,0,.08);
+      background: rgba(255,255,255,.85);
+      box-shadow: inset 0 0 0 3px rgba(255,255,255,.7);
+      min-width: 92px;
     }
-    .mcell{ width:10px; height:10px; background:transparent; }
-    .mfill-blue{ background:rgba(26,115,232,.9); }
-    .mfill-orange{ background:rgba(242,153,0,.95); }
+    .mcell{
+      width:12px; height:12px;
+      border-radius:4px;
+      background: transparent;
+      border: 1px solid rgba(0,0,0,.08);
+    }
+    .mfill-blue{ background: var(--blue); }
+    .mfill-orange{ background: var(--orange); }
 
-    .muted{ color:var(--muted); font-size:13px; line-height:1.4; }
-    .selected{ outline:3px solid rgba(26,115,232,.25); }
-    .twoCol{ display:grid; grid-template-columns:1fr; gap:12px; }
+    .help{
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+      font-weight: 800;
+    }
+
+    .ruleBox{
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.75);
+      border: 2px dashed rgba(0,0,0,.10);
+      color: #344054;
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1.35;
+    }
+
     @media (max-width: 980px){
-      .wrap{ grid-template-columns:1fr; }
+      .wrap{ grid-template-columns: 1fr; }
     }
   </style>
 </head>
+
 <body>
   <div class="wrap">
-    <div class="boardCard">
+    <div class="card">
       <div class="header">
         <div>
-          <div class="title">Mini Blokus (2 Players)</div>
-          <div class="sub">Hot-seat: Blue vs Orange • Click a piece → click a board cell to place</div>
+          <div class="title">Block Dominion</div>
+          <div class="sub">2 players • Hot-seat • Pick a piece → hover → click to place</div>
         </div>
-        <div class="pill" id="turnPill"><span class="turnDot" id="turnDot"></span><span id="turnText"></span></div>
+        <div class="pill" id="turnPill">
+          <span class="dot" id="turnDot"></span>
+          <span id="turnText"></span>
+        </div>
       </div>
 
       <div class="main">
-        <div class="row" style="margin-bottom:12px;">
-          <button id="rotateBtn">Rotate ⟳</button>
-          <button id="flipBtn">Flip ⇋</button>
-          <button id="passBtn">Pass Turn</button>
-          <button id="resetBtn">Reset</button>
-          <span class="muted" id="status"></span>
+        <div class="controls">
+          <button class="btnNeutral" id="rotateBtn">Rotate ⟳</button>
+          <button class="btnNeutral" id="flipBtn">Flip ⇋</button>
+          <button class="btnNeutral" id="passBtn">Pass</button>
+          <button class="btnNeutral" id="resetBtn">Reset</button>
+          <span class="status" id="status"></span>
         </div>
 
-        <div class="grid" id="grid" aria-label="game board"></div>
-        <div class="muted" style="margin-top:10px;">
-          Rules implemented: first move must cover your corner; later moves must touch your own tiles by corner only (no edge-touch).
+        <div class="gridWrap">
+          <div class="grid" id="grid" aria-label="game board"></div>
+        </div>
+
+        <div class="ruleBox">
+          ✅ First move must cover your own corner.<br/>
+          ✅ After that, your new piece must touch your own tiles <b>by corner</b> (diagonal).<br/>
+          ❌ Your new piece must <b>not</b> touch your own tiles <b>by edge</b> (side).
         </div>
       </div>
     </div>
 
-    <div class="sideCard">
+    <div class="card side">
       <div class="header">
         <div>
-          <div class="title">Pieces</div>
-          <div class="sub">Each piece can be used once per player</div>
+          <div class="title" style="font-size:18px;">Piece Picker</div>
+          <div class="sub">Dropdown updates each turn • Used pieces disappear</div>
         </div>
       </div>
-      <div class="main twoCol">
-        <div>
-          <div class="muted" style="margin:0 0 8px 0;">Blue pieces</div>
-          <div class="pieces" id="bluePieces"></div>
+
+      <div class="panel">
+        <label for="pieceSelect">Choose a piece</label>
+        <select id="pieceSelect"></select>
+
+        <div class="miniRow">
+          <div class="mini" id="miniPreview" aria-label="piece preview"></div>
+          <div class="help" id="pieceHelp">
+            Pick a piece from the dropdown.<br/>
+            Then hover the board to preview.<br/>
+            Click to place.
+          </div>
         </div>
-        <div>
-          <div class="muted" style="margin:0 0 8px 0;">Orange pieces</div>
-          <div class="pieces" id="orangePieces"></div>
+
+        <div class="ruleBox" style="margin-top:14px;">
+          Tip: If a piece won’t fit, try <b>Rotate</b> or <b>Flip</b>.
         </div>
       </div>
     </div>
   </div>
 
 <script>
-/** Mini Blokus starter
- * Board: 14x14
- * 2 players: 0 = Blue, 1 = Orange
- * Corner starts: Blue top-left, Orange bottom-right
- * Rule: First move must cover your corner.
- * Next moves: must touch your own tiles by corner (diagonal adjacency) and must NOT touch by edge.
+/**
+ * Block Dominion (2 Players)
+ * Full 21-piece Blokus set (sizes 1..5):
+ * - 1 monomino
+ * - 1 domino
+ * - 2 trominoes
+ * - 5 tetrominoes
+ * - 12 pentominoes
+ *
+ * Rules implemented:
+ * - First move: must cover your corner.
+ * - Later moves: must touch your own tiles by corner (diagonal) and must NOT touch by edge.
  */
 
 const SIZE = 14;
+
 const PLAYERS = [
-  { name: "Blue", colorClass: "owned-blue", miniClass: "mfill-blue", corner: [0,0] },
-  { name: "Orange", colorClass: "owned-orange", miniClass: "mfill-orange", corner: [SIZE-1,SIZE-1] }
+  { name: "Blue",   color: "var(--blue)",   colorClass: "owned-blue",   miniClass: "mfill-blue",   corner: [0,0] },
+  { name: "Orange", color: "var(--orange)", colorClass: "owned-orange", miniClass: "mfill-orange", corner: [SIZE-1,SIZE-1] }
 ];
 
-// Simple starter set (small, medium, larger). You can add more shapes later.
+// 21 pieces (coords are polyomino cells relative to an anchor; will be normalized)
 const SHAPES = [
-  // coords relative to anchor (0,0)
-  { id:"I1", name:"Dot", cells:[[0,0]] },
-  { id:"I2", name:"Domino", cells:[[0,0],[1,0]] },
-  { id:"L3", name:"L3", cells:[[0,0],[1,0],[0,1]] },
-  { id:"I3", name:"Line3", cells:[[0,0],[1,0],[2,0]] },
-  { id:"O4", name:"Square", cells:[[0,0],[1,0],[0,1],[1,1]] },
-  { id:"T4", name:"T4", cells:[[0,0],[1,0],[2,0],[1,1]] },
-  { id:"L4", name:"L4", cells:[[0,0],[1,0],[2,0],[0,1]] },
-  { id:"Z4", name:"Z4", cells:[[0,0],[1,0],[1,1],[2,1]] },
-  { id:"P5", name:"P5", cells:[[0,0],[1,0],[0,1],[1,1],[0,2]] },
-  { id:"F5", name:"F5", cells:[[1,0],[0,1],[1,1],[2,1],[0,2]] },
+  // size 1
+  { id:"1-MONO", name:"Mono (1)", cells:[[0,0]] },
+
+  // size 2
+  { id:"2-DOMI", name:"Domino (2)", cells:[[0,0],[1,0]] },
+
+  // size 3 (2 pieces)
+  { id:"3-I",    name:"I-3 (3)", cells:[[0,0],[1,0],[2,0]] },
+  { id:"3-V",    name:"V-3 (3)", cells:[[0,0],[1,0],[0,1]] },
+
+  // size 4 (5 pieces)
+  { id:"4-I",    name:"I-4 (4)", cells:[[0,0],[1,0],[2,0],[3,0]] },
+  { id:"4-O",    name:"O-4 (4)", cells:[[0,0],[1,0],[0,1],[1,1]] },
+  { id:"4-T",    name:"T-4 (4)", cells:[[0,0],[1,0],[2,0],[1,1]] },
+  { id:"4-L",    name:"L-4 (4)", cells:[[0,0],[1,0],[2,0],[0,1]] },
+  { id:"4-S",    name:"S-4 (4)", cells:[[0,0],[1,0],[1,1],[2,1]] },
+
+  // size 5 (12 pieces) — classic pentomino set
+  { id:"5-F",    name:"F (5)", cells:[[0,1],[1,0],[1,1],[1,2],[2,2]] },
+  { id:"5-I",    name:"I (5)", cells:[[0,0],[1,0],[2,0],[3,0],[4,0]] },
+  { id:"5-L",    name:"L (5)", cells:[[0,0],[1,0],[2,0],[3,0],[0,1]] },
+  { id:"5-P",    name:"P (5)", cells:[[0,0],[1,0],[0,1],[1,1],[0,2]] },
+  { id:"5-N",    name:"N (5)", cells:[[0,0],[1,0],[2,0],[2,1],[3,1]] },
+  { id:"5-T",    name:"T (5)", cells:[[0,0],[1,0],[2,0],[1,1],[1,2]] },
+  { id:"5-U",    name:"U (5)", cells:[[0,0],[0,1],[1,0],[2,0],[2,1]] },
+  { id:"5-V",    name:"V (5)", cells:[[0,0],[1,0],[2,0],[2,1],[2,2]] },
+  { id:"5-W",    name:"W (5)", cells:[[0,0],[1,0],[1,1],[2,1],[2,2]] },
+  { id:"5-X",    name:"X (5)", cells:[[1,0],[0,1],[1,1],[2,1],[1,2]] },
+  { id:"5-Y",    name:"Y (5)", cells:[[0,0],[1,0],[2,0],[3,0],[2,1]] },
+  { id:"5-Z",    name:"Z (5)", cells:[[0,0],[1,0],[1,1],[1,2],[2,2]] },
 ];
 
-let board = Array.from({length: SIZE}, () => Array(SIZE).fill(-1)); // -1 empty, else player index
+let board = Array.from({length: SIZE}, () => Array(SIZE).fill(-1));
 let used = [new Set(), new Set()];
-let turn = 0;
 let firstMoveDone = [false, false];
+let turn = 0;
 
-let selectedShape = null; // {shapeId, baseCells}
+let selectedShapeId = null;
 let currentCells = null; // transformed cells for placement
 
 const gridEl = document.getElementById("grid");
 const statusEl = document.getElementById("status");
 const turnText = document.getElementById("turnText");
-const turnDot = document.getElementById("turnDot");
+const turnDot  = document.getElementById("turnDot");
+const pieceSelect = document.getElementById("pieceSelect");
+const miniPreview = document.getElementById("miniPreview");
+const pieceHelp = document.getElementById("pieceHelp");
+
+function normalize(cells){
+  const minR = Math.min(...cells.map(x=>x[0]));
+  const minC = Math.min(...cells.map(x=>x[1]));
+  const shifted = cells.map(([r,c])=>[r-minR, c-minC]);
+  shifted.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+  return shifted;
+}
+
+function rotateCells(cells){
+  // (r,c)->(c,-r)
+  return normalize(cells.map(([r,c])=>[c,-r]));
+}
+
+function flipCells(cells){
+  // mirror (r,c)->(r,-c)
+  return normalize(cells.map(([r,c])=>[r,-c]));
+}
+
+function setStatus(msg){ statusEl.textContent = msg; }
 
 function setTurnUI(){
   const p = PLAYERS[turn];
   turnText.textContent = `Turn: ${p.name}`;
-  turnDot.style.background = (turn===0) ? "var(--blue)" : "var(--orange)";
+  turnDot.style.background = p.color;
 }
-setTurnUI();
 
 function buildBoard(){
   gridEl.innerHTML = "";
@@ -183,9 +427,11 @@ function buildBoard(){
       cell.className = "cell";
       cell.dataset.r = r;
       cell.dataset.c = c;
+
       cell.addEventListener("mouseenter", () => previewAt(r,c));
       cell.addEventListener("mouseleave", clearPreview);
       cell.addEventListener("click", () => tryPlaceAt(r,c));
+
       gridEl.appendChild(cell);
     }
   }
@@ -206,203 +452,10 @@ function renderBoard(){
   }
 }
 
-function buildPieces(){
-  const blueEl = document.getElementById("bluePieces");
-  const orangeEl = document.getElementById("orangePieces");
-  blueEl.innerHTML = "";
-  orangeEl.innerHTML = "";
-
-  for(const shape of SHAPES){
-    blueEl.appendChild(pieceButton(0, shape));
-    orangeEl.appendChild(pieceButton(1, shape));
-  }
-}
-
-function pieceButton(playerIdx, shape){
-  const btn = document.createElement("div");
-  btn.className = "pieceBtn";
-  btn.dataset.player = playerIdx;
-  btn.dataset.shape = shape.id;
-
-  const left = document.createElement("div");
-  left.style.display="flex";
-  left.style.alignItems="center";
-  left.style.gap="10px";
-
-  const mini = makeMini(shape, PLAYERS[playerIdx].miniClass);
-  const label = document.createElement("div");
-  label.innerHTML = `<div style="font-weight:750">${shape.name}</div><div class="muted" style="font-size:12px;">${shape.id}</div>`;
-  left.appendChild(mini);
-  left.appendChild(label);
-
-  const right = document.createElement("div");
-  right.className = "muted";
-  right.style.fontSize="12px";
-  right.textContent = "Pick";
-
-  btn.appendChild(left);
-  btn.appendChild(right);
-
-  btn.addEventListener("click", () => {
-    if(playerIdx !== turn){
-      setStatus(`It's ${PLAYERS[turn].name}'s turn.`);
-      return;
-    }
-    if(used[playerIdx].has(shape.id)){
-      setStatus("That piece is already used.");
-      return;
-    }
-    selectPiece(btn, shape);
-  });
-
-  return btn;
-}
-
-function makeMini(shape, fillClass){
-  // render in 5x5 mini grid, auto-centered
-  const mini = document.createElement("div");
-  mini.className = "mini";
-  const grid = Array.from({length:5}, ()=>Array(5).fill(0));
-  const cells = normalize(shape.cells);
-  // center-ish
-  const maxR = Math.max(...cells.map(c=>c[0]));
-  const maxC = Math.max(...cells.map(c=>c[1]));
-  const offR = Math.floor((4-maxR)/2);
-  const offC = Math.floor((4-maxC)/2);
-
-  for(const [r,c] of cells){
-    const rr = r+offR, cc = c+offC;
-    if(rr>=0 && rr<5 && cc>=0 && cc<5) grid[rr][cc]=1;
-  }
-  for(let r=0;r<5;r++){
-    for(let c=0;c<5;c++){
-      const mc = document.createElement("div");
-      mc.className = "mcell";
-      if(grid[r][c]===1) mc.classList.add(fillClass);
-      mini.appendChild(mc);
-    }
-  }
-  return mini;
-}
-
-function selectPiece(btn, shape){
-  // clear selection highlight
-  document.querySelectorAll(".pieceBtn").forEach(x=>x.classList.remove("selected"));
-  btn.classList.add("selected");
-  selectedShape = { shapeId: shape.id, base: normalize(shape.cells) };
-  currentCells = selectedShape.base.map(x=>[x[0],x[1]]);
-  setStatus(`Selected ${shape.name}. Hover the board to preview; click to place.`);
-}
-
-function normalize(cells){
-  // move so min r,c = 0,0
-  const minR = Math.min(...cells.map(x=>x[0]));
-  const minC = Math.min(...cells.map(x=>x[1]));
-  const shifted = cells.map(([r,c])=>[r-minR, c-minC]);
-  // sort stable
-  shifted.sort((a,b)=> a[0]-b[0] || a[1]-b[1]);
-  return shifted;
-}
-
-function rotateCells(cells){
-  // (r,c) -> (c, -r) then normalize
-  const rotated = cells.map(([r,c])=>[c, -r]);
-  return normalize(rotated);
-}
-
-function flipCells(cells){
-  // mirror horizontally: (r,c)->(r,-c) then normalize
-  const flipped = cells.map(([r,c])=>[r, -c]);
-  return normalize(flipped);
-}
-
-document.getElementById("rotateBtn").addEventListener("click", ()=>{
-  if(!currentCells){ setStatus("Select a piece first."); return; }
-  currentCells = rotateCells(currentCells);
-  setStatus("Rotated.");
-});
-
-document.getElementById("flipBtn").addEventListener("click", ()=>{
-  if(!currentCells){ setStatus("Select a piece first."); return; }
-  currentCells = flipCells(currentCells);
-  setStatus("Flipped.");
-});
-
-document.getElementById("passBtn").addEventListener("click", ()=>{
-  clearSelection();
-  turn = 1-turn;
-  setTurnUI();
-  setStatus(`${PLAYERS[turn].name}'s turn.`);
-});
-
-document.getElementById("resetBtn").addEventListener("click", ()=>{
-  board = Array.from({length: SIZE}, () => Array(SIZE).fill(-1));
-  used = [new Set(), new Set()];
-  firstMoveDone = [false,false];
-  turn = 0;
-  clearSelection();
-  setTurnUI();
-  buildPieces();
-  renderBoard();
-  setStatus("Reset done.");
-});
-
-function clearSelection(){
-  selectedShape = null;
-  currentCells = null;
-  document.querySelectorAll(".pieceBtn").forEach(x=>x.classList.remove("selected"));
-  clearPreview();
-}
-
-function setStatus(msg){ statusEl.textContent = msg; }
-
 function clearPreview(){
-  const cells = gridEl.children;
-  for(const el of cells){
+  for(const el of gridEl.children){
     el.classList.remove("preview-ok","preview-bad");
   }
-}
-
-function previewAt(r,c){
-  clearPreview();
-  if(!currentCells) return;
-
-  const placement = currentCells.map(([dr,dc])=>[r+dr,c+dc]);
-  const ok = canPlace(turn, placement);
-
-  for(const [rr,cc] of placement){
-    if(rr<0||rr>=SIZE||cc<0||cc>=SIZE) continue;
-    const el = gridEl.children[rr*SIZE+cc];
-    el.classList.add(ok ? "preview-ok" : "preview-bad");
-  }
-}
-
-function tryPlaceAt(r,c){
-  if(!currentCells || !selectedShape){
-    setStatus("Select a piece first.");
-    return;
-  }
-  const placement = currentCells.map(([dr,dc])=>[r+dr,c+dc]);
-  if(!canPlace(turn, placement)){
-    setStatus("Invalid placement. (Must be in bounds, not overlap, corner-touch rule, no edge-touch).");
-    return;
-  }
-
-  // place
-  for(const [rr,cc] of placement){
-    board[rr][cc] = turn;
-  }
-  used[turn].add(selectedShape.shapeId);
-  firstMoveDone[turn] = true;
-
-  renderBoard();
-  buildPieces(); // re-render to reflect used set
-  clearSelection();
-
-  // next turn
-  turn = 1-turn;
-  setTurnUI();
-  setStatus(`${PLAYERS[turn].name}'s turn.`);
 }
 
 function inBounds(r,c){ return r>=0 && r<SIZE && c>=0 && c<SIZE; }
@@ -414,25 +467,21 @@ function canPlace(player, cells){
     if(board[r][c] !== -1) return false;
   }
 
-  const p = PLAYERS[player];
-  const cornerCell = p.corner;
-
-  // First move must cover your corner
+  // first move must cover your corner
+  const corner = PLAYERS[player].corner;
   if(!firstMoveDone[player]){
-    return cells.some(([r,c]) => r===cornerCell[0] && c===cornerCell[1]);
+    return cells.some(([r,c])=>r===corner[0] && c===corner[1]);
   }
 
-  // Later moves:
-  // Must touch own tiles by CORNER at least once
-  // Must NOT touch own tiles by EDGE
+  // later: must corner-touch own tiles, and must NOT edge-touch own tiles
   let touchesCorner = false;
+
   for(const [r,c] of cells){
-    // edge neighbors
     const edges = [[r-1,c],[r+1,c],[r,c-1],[r,c+1]];
     for(const [er,ec] of edges){
       if(inBounds(er,ec) && board[er][ec]===player) return false; // illegal edge-touch
     }
-    // corner neighbors
+
     const diags = [[r-1,c-1],[r-1,c+1],[r+1,c-1],[r+1,c+1]];
     for(const [dr,dc] of diags){
       if(inBounds(dr,dc) && board[dr][dc]===player) touchesCorner = true;
@@ -441,10 +490,195 @@ function canPlace(player, cells){
   return touchesCorner;
 }
 
-buildBoard();
-buildPieces();
-setStatus("Blue starts. Select a Blue piece.");
+function previewAt(r,c){
+  clearPreview();
+  if(!currentCells) return;
 
+  const placement = currentCells.map(([dr,dc])=>[r+dr,c+dc]);
+  const ok = canPlace(turn, placement);
+
+  for(const [rr,cc] of placement){
+    if(!inBounds(rr,cc)) continue;
+    gridEl.children[rr*SIZE + cc].classList.add(ok ? "preview-ok" : "preview-bad");
+  }
+}
+
+function tryPlaceAt(r,c){
+  if(!currentCells || !selectedShapeId){
+    setStatus("Pick a piece from the dropdown first.");
+    return;
+  }
+
+  const placement = currentCells.map(([dr,dc])=>[r+dr,c+dc]);
+  if(!canPlace(turn, placement)){
+    setStatus("Oops! Invalid placement. Try rotate/flip or a different spot.");
+    return;
+  }
+
+  // place
+  for(const [rr,cc] of placement){
+    board[rr][cc] = turn;
+  }
+
+  used[turn].add(selectedShapeId);
+  firstMoveDone[turn] = true;
+
+  renderBoard();
+
+  // remove used piece from dropdown + clear selection
+  selectedShapeId = null;
+  currentCells = null;
+  rebuildDropdownForTurn();
+  renderMiniPreview(null);
+
+  // next turn
+  turn = 1-turn;
+  setTurnUI();
+  rebuildDropdownForTurn();
+  setStatus(`${PLAYERS[turn].name}'s turn! Pick a piece.`);
+}
+
+function rebuildDropdownForTurn(){
+  const p = PLAYERS[turn];
+
+  // Clear
+  pieceSelect.innerHTML = "";
+
+  // Placeholder
+  const ph = document.createElement("option");
+  ph.value = "";
+  ph.textContent = `— Choose a ${p.name} piece —`;
+  pieceSelect.appendChild(ph);
+
+  // Add remaining pieces for this player
+  const remaining = SHAPES.filter(s => !used[turn].has(s.id));
+  for(const s of remaining){
+    const opt = document.createElement("option");
+    opt.value = s.id;
+    opt.textContent = s.name;
+    pieceSelect.appendChild(opt);
+  }
+
+  // If none remaining
+  if(remaining.length === 0){
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "(No pieces left) — Pass or Reset";
+    pieceSelect.appendChild(opt);
+  }
+
+  pieceHelp.innerHTML =
+    `Now playing: <b style="color:${p.color}">${p.name}</b><br/>` +
+    `Pick a piece, then hover the board.<br/>` +
+    `Rotate/Flip if needed.`;
+
+  // reset selection
+  pieceSelect.value = "";
+}
+
+function renderMiniPreview(shape){
+  miniPreview.innerHTML = "";
+
+  // 5x5 mini grid
+  const grid = Array.from({length:5}, ()=>Array(5).fill(0));
+
+  if(shape){
+    const cells = normalize(shape.cells);
+    const maxR = Math.max(...cells.map(x=>x[0]));
+    const maxC = Math.max(...cells.map(x=>x[1]));
+    const offR = Math.floor((4-maxR)/2);
+    const offC = Math.floor((4-maxC)/2);
+
+    for(const [r,c] of cells){
+      const rr = r + offR, cc = c + offC;
+      if(rr>=0 && rr<5 && cc>=0 && cc<5) grid[rr][cc] = 1;
+    }
+  }
+
+  for(let r=0;r<5;r++){
+    for(let c=0;c<5;c++){
+      const mc = document.createElement("div");
+      mc.className = "mcell";
+      if(grid[r][c]===1){
+        mc.classList.add(PLAYERS[turn].miniClass);
+      }
+      miniPreview.appendChild(mc);
+    }
+  }
+}
+
+pieceSelect.addEventListener("change", ()=>{
+  const id = pieceSelect.value;
+  if(!id){
+    selectedShapeId = null;
+    currentCells = null;
+    renderMiniPreview(null);
+    setStatus("Pick a piece to start.");
+    return;
+  }
+
+  const shape = SHAPES.find(s=>s.id===id);
+  if(!shape){
+    selectedShapeId = null;
+    currentCells = null;
+    renderMiniPreview(null);
+    setStatus("That piece wasn’t found (try again).");
+    return;
+  }
+
+  selectedShapeId = shape.id;
+  currentCells = normalize(shape.cells).map(x=>[x[0],x[1]]);
+  renderMiniPreview(shape);
+
+  setStatus(`Selected: ${shape.name}. Hover the board to preview, click to place!`);
+});
+
+document.getElementById("rotateBtn").addEventListener("click", ()=>{
+  if(!currentCells){ setStatus("Pick a piece first."); return; }
+  currentCells = rotateCells(currentCells);
+  setStatus("Rotated! Hover again to preview.");
+});
+
+document.getElementById("flipBtn").addEventListener("click", ()=>{
+  if(!currentCells){ setStatus("Pick a piece first."); return; }
+  currentCells = flipCells(currentCells);
+  setStatus("Flipped! Hover again to preview.");
+});
+
+document.getElementById("passBtn").addEventListener("click", ()=>{
+  selectedShapeId = null;
+  currentCells = null;
+  renderMiniPreview(null);
+  clearPreview();
+
+  turn = 1-turn;
+  setTurnUI();
+  rebuildDropdownForTurn();
+  setStatus(`${PLAYERS[turn].name}'s turn! Pick a piece.`);
+});
+
+document.getElementById("resetBtn").addEventListener("click", ()=>{
+  board = Array.from({length: SIZE}, () => Array(SIZE).fill(-1));
+  used = [new Set(), new Set()];
+  firstMoveDone = [false,false];
+  turn = 0;
+
+  selectedShapeId = null;
+  currentCells = null;
+
+  renderBoard();
+  clearPreview();
+  setTurnUI();
+  rebuildDropdownForTurn();
+  renderMiniPreview(null);
+  setStatus("Reset done! Blue starts.");
+});
+
+buildBoard();
+setTurnUI();
+rebuildDropdownForTurn();
+renderMiniPreview(null);
+setStatus("Blue starts! Pick a piece from the dropdown.");
 </script>
 </body>
 </html>
